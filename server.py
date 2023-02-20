@@ -37,7 +37,7 @@ def api_message():
         pprint(my_info)
         file_name = my_info['head_commit']['modified'][0]  # pega o primeiro arquivo modificado
         print(file_name)        
-        caminho = 'C:\\Python scripts'
+        caminho = 'C:\\Users\\guilh\\OneDrive\\Documentos\\Python Scripts'
         caminho_completo = procurar_arquivo(file_name, caminho)
         if caminho_completo is not None:
             print(f'O arquivo foi encontrado em: {caminho_completo}')
