@@ -21,29 +21,29 @@ app = Flask(__name__)
 def api_root():
     return 'welcome'
 
-@app.route('/github', methods=['POST'])
-def api_message():
-    if request.headers['Content-Type'] == 'application/json':
-        my_info = request.json
-        pprint(my_info)
-        file_name = (my_info['head_commit']['modified'])
-        print((file_name))        
-        return file_name
-
 # @app.route('/github', methods=['POST'])
 # def api_message():
 #     if request.headers['Content-Type'] == 'application/json':
 #         my_info = request.json
 #         pprint(my_info)
-#         file_name = my_info['head_commit']['modified'][0]  # pega o primeiro arquivo modificado
-#         print(file_name)        
-#         caminho = 'C:\\Users\\guilh\\OneDrive\\Documentos\\Python Scripts'
-#         caminho_completo = procurar_arquivo(file_name, caminho)
-#         if caminho_completo is not None:
-#             print(f'O arquivo foi encontrado em: {caminho_completo}')
-#         else:
-#             print(f'O arquivo {file_name} não foi encontrado em {caminho}.')
+#         file_name = (my_info['head_commit']['modified'])
+#         print((file_name))        
 #         return file_name
+
+@app.route('/github', methods=['POST'])
+def api_message():
+    if request.headers['Content-Type'] == 'application/json':
+        my_info = request.json
+        pprint(my_info)
+        file_name = my_info['head_commit']['modified'][0]  # pega o primeiro arquivo modificado
+        print(file_name)        
+        caminho = 'C:\\Users\\guilh\\OneDrive\\Documentos\\Python Scripts'
+        caminho_completo = procurar_arquivo(file_name, caminho)
+        if caminho_completo is not None:
+            print(f'O arquivo foi encontrado em: {caminho_completo}')
+        else:
+            print(f'O arquivo {file_name} não foi encontrado em {caminho}.')
+        return file_name
 
 if __name__ == '__main__':
     app.run(debug=True)
