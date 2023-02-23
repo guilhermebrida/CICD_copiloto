@@ -12,90 +12,433 @@ from datetime import date
 
 
 
-# PERFIL 
-list_replace = [' VL12',' VL10',' VC5',' VL6',' VL8']
-tipo = 'Perfil'
-lista_comandos = []
+class GeraPerfil():
 
-path = dlg.askopenfilename()
-f=open(f'{path}', encoding='utf_8')
-tudo = f.read()
-tudo = re.sub('/.*','', tudo)
-comandos = (re.findall('>.*<',tudo))
-for i in range(len(comandos)):
-    if i != (len(comandos)-1):
-        lista_comandos.append(comandos[i]+';')
-    if i == (len(comandos)-1):
-        lista_comandos.append(comandos[i])
+    def main(self,caminho) -> None:
+        self.path = caminho
+        list_replace = [' VL12',' VL10',' VC5',' VL6',' VL8']
+        self.tipo = 'Perfil'
+        self.lista_comandos = []
 
-buscaS3 = re.search('>TCFG13,9999<', tudo)
-buscaS1 = re.search('>SIS8.*<', tudo)
-buscaS4 = re.search('>SSB.*<', tudo)
-if buscaS4 is None:
-    buscaS4 = re.search('VC5',path)
+        # self.path = dlg.askopenfilename()
+        f=open(f'{self.path}', encoding='utf_8')
+        self.tudo = f.read()
+        self.tudo = re.sub('/.*','', self.tudo)
+        comandos = (re.findall('>.*<',self.tudo))
+        for i in range(len(comandos)):
+            if i != (len(comandos)-1):
+                self.lista_comandos.append(comandos[i]+';')
+            if i == (len(comandos)-1):
+                self.lista_comandos.append(comandos[i])
 
-buscaS8 = re.search('VL8', tudo)
-if buscaS8 is None:
-    buscaS8 = re.search('VL8',path)
+        self.buscaS3 = re.search('>TCFG13,9999<', self.tudo)
+        self.buscaS1 = re.search('>SIS8.*<', self.tudo)
+        self.buscaS4 = re.search('>SSB.*<', self.tudo)
+        if self.buscaS4 is None:
+            self.buscaS4 = re.search('VC5',self.path)
 
-path = path.split('/')[-1].split('.')[0]
-idarquivo= path.replace('_',' ')
-for i in list_replace:
-    idarquivo = idarquivo.replace(i,'')
+        self.buscaS8 = re.search('VL8', self.tudo)
+        if self.buscaS8 is None:
+            self.buscaS8 = re.search('VL8',self.path)
 
+        self.path = str(self.path).split('\\')[-1].split('.')[0]
+        self.idarquivo= self.path.replace('_',' ')
+        for i in list_replace:
+            self.idarquivo = self.idarquivo.replace(i,'')
 
-
-
-
-def Json(*args):
-    if path is not None:
-        idarq='{"idarquivo":"'+idarquivo+'",'
-        Jtipo='"tipo":"'+tipo+'",'
-        Jhardware='"hardware":["'+hardware+'"],'
-        Jversao='"configs":[{"Versão":"'+versao+'"},'
-        idarq2='{"idarquivo":"'+idarquivo+'"}'
-        cabeçalho=idarq+Jtipo+Jhardware+Jversao+idarq2
-        if tablet is not None:
-            Jtablet=',{"Modelo Tablet":"'+tablet+'"}'
-            cabeçalho=cabeçalho+Jtablet
-        Jmifare=',{"Mifare":"'+mifare+'"}'
-        cabeçalho = cabeçalho+Jmifare
-        if lim_vel is not None:
-            limiteVel=',{"limite Vel":"'+lim_vel+'"}'
-            cabeçalho=cabeçalho+limiteVel
-        if vel_evento is not None:
-            velEvento=',{"limite Vel Evento":"'+vel_evento+'"}'
-            cabeçalho=cabeçalho+velEvento
-        if tempo_infra is not None:
-            tempoInfra=',{"Tempo Infração":"'+tempo_infra+'"}'
-            cabeçalho=cabeçalho+tempoInfra
-        comandos='],"comandos":"'
-        cabeçalho=cabeçalho+comandos
-    return cabeçalho
+        if self.buscaS3 is not None:
+            ##### VARIAVEIS PARA CABEÇALHO 
+            self.hardware = 'VIRLOC12'
 
 
-def Criar(*args,x):
-    cabeçalho = x
-    f2=open (f'{path}.json','w',encoding='utf-8')
-    f2.write(cabeçalho)
-    for i in range(len(lista_comandos)):
-        f2.write(lista_comandos[i]) 
-    f2.write('"')
-    hash = ',"hash":""}'
-    f2.write(hash)
-    f2.close()
+            self.lim_vel= re.search('>SCT11.*<',self.tudo)
+            if self.lim_vel is not None:
+                self.lim_vel= re.search('>SCT11.*<',self.tudo).group()[7:-1]
+                if str(len(self.lim_vel)) == '5':
+                    self.lim_vel = self.lim_vel[0:2]
+                else:
+                    self.lim_vel = self.lim_vel[0:3]
+
+            
+
+            self.vel_evento= re.search('>SCT12.*<',self.tudo)
+            if self.vel_evento is not None:
+                self.vel_evento= re.search('>SCT12.*<',self.tudo).group()[7:-1]
+                if str(len(self.vel_evento)) == '5':
+                    self.vel_evento = self.vel_evento[0:2]
+                if str(len(self.vel_evento)) == '6':
+                    self.vel_evento = self.vel_evento[0:3]
 
 
-def message():
-    f=open(f'{path}.json',encoding='utf_8')
-    json_data=f.read()
-    json_dict = json.loads(json_data)
-    comandos=json_dict['comandos']
-    return comandos
+
+            self.tempo_infra= re.search('>SCT06.*<',self.tudo)
+            if self.tempo_infra is not None:
+                self.tempo_infra= re.search('>SCT06.*<',self.tudo).group()[7:-1]
 
 
-class AES_pkcs5:
-    def __init__(self,key:str, mode:AES.MODE_CBC=AES.MODE_CBC,block_size:int=16):
+
+            self.mifare= re.search('>SSH11.*<',self.tudo)
+            if self.mifare is not None:
+                self.mifare= re.search('>SSH11.*<',self.tudo).group()[6]
+                if self.mifare == '1':
+                    self.mifare = 'Habilitado'
+                else:
+                    self.mifare = 'Desabilitado'
+            else:
+                self.mifare = 'Desabilitado' 
+
+
+            self.versao= re.search('>STP01.*<',self.tudo)
+            if self.versao is not None:
+                self.versao1 = re.search('-+',self.versao.group())
+                if self.versao1 is None:
+                    self.versao1= re.search('>STP01.*<',self.tudo).group()
+                    self.versao1= re.search('\d\d\d\d*',self.versao1).group()
+                    self.versao = self.versao1
+            else:
+                self.versao = re.search('>STP03.*<',self.tudo)
+                if self.versao is not None:
+                    self.versao2 = re.search('-+',self.versao.group())
+                    if self.versao2 is None:
+                        self.versao2= re.search('\d\d\d\d*',self.versao.group()).group()
+                        self.versao = self.versao2
+            
+
+
+
+            self.tablet = re.search('>SED169.*<', self.tudo)
+            if self.tablet is not None:
+                self.tablet = re.search('>SED169.*<', self.tudo).group()
+                self.tabletN77 = re.search('TRM', self.tablet)
+                if self.tabletN77 is not None:
+                    self.tablet = 'N776/N77'
+                self.tabletSAM = re.search('VCM_SL', self.tablet)
+                if self.tabletSAM is not None:
+                    self.tablet = 'SAMSUNG'
+                self.SEMtablet = re.search('SGN NN', self.tablet)
+                if self.SEMtablet is not None:
+                    self.tablet = None
+                
+        elif self.buscaS1 is not None:
+            ##### VARIAVEIS PARA CABEÇALHO 
+
+            self.hardware = 'VIRLOC6'
+
+            self.lim_vel= re.search('>VS08,100.*<',self.tudo)
+            if self.lim_vel is not None:
+                self.lim_vel= re.search('>VS08,100.*<',self.tudo).group()[10:13]
+                if self.lim_vel[0] == '0':
+                    self.lim_vel = re.sub(r'0', '', self.lim_vel, count = 1)
+
+
+            
+
+            self.tempo_infra= re.findall('>SCT06.*<',self.tudo)
+            if ((self.tempo_infra is not None) and (self.tempo_infra !='0')):
+                self.tempo_infra= re.findall('>SCT06.*<',self.tudo)[1]
+                self.tempo_infra = self.tempo_infra[7:-1]
+
+
+
+            self.mifare= re.search('>SSH11.*<',self.tudo)
+            if self.mifare is not None:
+                self.mifare= re.search('>SSH11.*<',self.tudo).group()[6]
+                if self.mifare == '1':
+                    self.mifare = 'Habilitado'
+                else:
+                    self.mifare = 'Desabilitado'
+            else:
+                self.mifare = 'Desabilitado' 
+
+
+            self.versao= re.search('>SIS82.*<',self.tudo)
+            if self.versao is not None:
+                self.versao1 = re.search('-',self.versao.group())
+                if self.versao1 is not None:
+                    self.versao1 = re.search('-',self.versao1.group())
+                else:    
+                    self.versao1= re.search('>SIS82.*<',self.tudo).group()
+                    self.versao1= re.search('\d\d\d\d*',self.versao1).group()
+                    self.versao = self.versao1
+            else:
+                self.versao = re.search('>SIS84.*<',self.tudo)
+                if self.versao is not None:
+                    self.versao2 = re.search('>SIS84.*<',self.tudo).group()
+                    if self.versao2 != '-':
+                        self.versao2= re.search('\d\d\d\d*',self.versao2).group()
+                        self.versao= self.versao2
+            
+
+            self.vel_evento = None
+            self.tablet = None
+            
+        elif self.buscaS4 is not None:
+
+            self.hardware = 'VIRCOM5'
+
+
+            self.lim_vel= re.search('>SCT11.*<',self.tudo)
+            if self.lim_vel is not None:
+                self.lim_vel= re.search('>SCT11.*<',self.tudo).group()[7:-1]
+                if str(len(self.lim_vel)) == '5':
+                    self.lim_vel = self.lim_vel[0:2]
+                else:
+                    self.lim_vel = self.lim_vel[0:3]
+
+            
+
+            self.vel_evento= re.search('>SCT12.*<',self.tudo)
+            if self.vel_evento is not None:
+                self.vel_evento= re.search('>SCT12.*<',self.tudo).group()[7:-1]
+                if str(len(self.vel_evento)) == '5':
+                    self.vel_evento = self.vel_evento[0:2]
+                if str(len(self.vel_evento)) == '6':
+                    self.vel_evento = self.vel_evento[0:3]
+
+
+
+            self.tempo_infra= re.search('>SCT06.*<',self.tudo)
+            if self.tempo_infra is not None:
+                self.tempo_infra= re.search('>SCT06.*<',self.tudo).group()[7:-1]
+
+
+            self.mifare= re.search('>SSH11.*<',self.tudo)
+            if self.mifare is not None:
+                self.mifare= re.search('>SSH11.*<',self.tudo).group()[6]
+                if self.mifare == '1':
+                    self.mifare = 'Habilitado'
+                else:
+                    self.mifare = 'Desabilitado'
+            else:
+                self.mifare = 'Desabilitado'
+
+            self.versao= re.search('>STP01.*<',self.tudo)
+            if self.versao is not None:
+                self.versao1 = re.search('-+',self.versao.group())
+                if self.versao1 is None:
+                    self.versao1= re.search('>STP01.*<',self.tudo).group()
+                    self.versao1= re.search('\d\d\d\d*',self.versao1).group()
+                    self.versao= self.versao1
+            else:
+                self.versao = re.search('>STP03.*<',self.tudo)
+                if self.versao is not None:
+                    self.versao2 = re.search('-+',self.versao.group())
+                    if self.versao2 is None:
+                        self.versao2= re.search('\d\d\d\d*',self.versao.group()).group()
+                        self.versao = self.versao2
+
+            self.tablet = None
+
+        elif self.buscaS8 is not None:
+
+            ##### VARIAVEIS PARA CABEÇALHO 
+            self.hardware = 'VIRLOC8'
+
+            self.lim_vel= re.search('>SCT11.*<',self.tudo)
+            if self.lim_vel is not None:
+                self.lim_vel= re.search('>SCT11.*<',self.tudo).group()[7:-1]
+                if str(len(self.lim_vel)) == '5':
+                    self.lim_vel = self.lim_vel[0:2]
+                else:
+                    self.lim_vel = self.lim_vel[0:3]
+
+            
+
+            self.vel_evento= re.search('>SCT12.*<',self.tudo)
+            if self.vel_evento is not None:
+                self.vel_evento= re.search('>SCT12.*<',self.tudo).group()[7:-1]
+                if str(len(self.vel_evento)) == '5':
+                    self.vel_evento = self.vel_evento[0:2]
+                if str(len(self.vel_evento)) == '6':
+                    self.vel_evento = self.vel_evento[0:3]
+
+
+
+            self.tempo_infra= re.search('>SCT06.*<',self.tudo)
+            if self.tempo_infra is not None:
+                self.tempo_infra= re.search('>SCT06.*<',self.tudo).group()[7:-1]
+
+
+
+            self.mifare= re.search('>SSH11.*<',self.tudo)
+            if self.mifare is not None:
+                self.mifare= re.search('>SSH11.*<',self.tudo).group()[6]
+                if self.mifare == '1':
+                    self.mifare = 'Habilitado'
+                else:
+                    self.mifare = 'Desabilitado'
+            else:
+                self.mifare = 'Desabilitado' 
+
+            
+            self.versao= re.search('>STP01.*<',self.tudo)
+            if self.versao is not None:
+                self.versao1 = re.search('-+',self.versao.group())
+                if self.versao1 is None:
+                    self.versao1= re.search('>STP01.*<',self.tudo).group()
+                    self.versao1= re.search('\d\d\d\d*',self.versao1).group()
+                    self.versao = self.versao1
+            if self.versao is None:
+                self.versao = re.search('>STP03.*<',self.tudo)
+                if self.versao is not None:
+                    self.versao2 = re.search('-+',self.versao.group())
+                    if self.versao2 is None:
+                        self.versao2= re.search('\d\d\d\d*',self.versao.group()).group()
+                        self.versao = self.versao2
+            print(self.versao)
+            # versao =None
+            # if versao is None:
+            #     versao = str(date.today())
+            #     versao = versao.replace('-','')[-6::]
+            
+
+
+            self.tablet = re.search('>SED169.*<', self.tudo)
+            if self.tablet is not None:
+                self.tablet = re.search('>SED169.*<', self.tudo).group()
+                self.tabletN77 = re.search('TRM', self.tablet)
+                if self.tabletN77 is not None:
+                    self.tablet = 'N776/N77'
+                self.tabletSAM = re.search('VCM_SL', self.tablet)
+                if self.tabletSAM is not None:
+                    self.tablet = 'SAMSUNG'
+                self.SEMtablet = re.search('SGN NN', self.tablet)
+                if self.SEMtablet is not None:
+                    self.tablet = None
+        
+            
+            
+        else:
+
+            ##### VARIAVEIS PARA CABEÇALHO 
+            self.hardware = 'VIRLOC10"'+','+'"VIRLOC11'
+
+            self.lim_vel= re.search('>SCT11.*<',self.tudo)
+            if self.lim_vel is not None:
+                self.lim_vel= re.search('>SCT11.*<',self.tudo).group()[7:-1]
+                if str(len(self.lim_vel)) == '5':
+                    self.lim_vel = self.lim_vel[0:2]
+                else:
+                    self.lim_vel = self.lim_vel[0:3]
+
+            
+
+            self.vel_evento= re.search('>SCT12.*<',self.tudo)
+            if self.vel_evento is not None:
+                self.vel_evento= re.search('>SCT12.*<',self.tudo).group()[7:-1]
+                if str(len(self.vel_evento)) == '5':
+                    self.vel_evento = self.vel_evento[0:2]
+                if str(len(self.vel_evento)) == '6':
+                    self.vel_evento = self.vel_evento[0:3]
+
+
+
+            self.tempo_infra= re.search('>SCT06.*<',self.tudo)
+            if self.tempo_infra is not None:
+                self.tempo_infra= re.search('>SCT06.*<',self.tudo).group()[7:-1]
+
+
+            self.mifare= re.search('>SSH11.*<',self.tudo)
+            if self.mifare is not None:
+                self.mifare= re.search('>SSH11.*<',self.tudo).group()[6]
+                if self.mifare == '1':
+                    self.mifare = 'Habilitado'
+                else:
+                    self.mifare = 'Desabilitado'
+            else:
+                self.mifare = 'Desabilitado'      
+
+
+
+            self.versao= re.search('>STP01.*<',self.tudo)
+            if self.versao is not None:
+                self.versao1 = re.search('-+',self.versao.group())
+                if self.versao1 is None:
+                    self.versao1= re.search('>STP01.*<',self.tudo).group()
+                    self.versao1= re.search('\d\d\d\d*',self.versao1).group()
+                    self.versao = self.versao1
+            else:
+                self.versao = re.search('>STP03.*<',self.tudo)
+                if self.versao is not None:
+                    self.versao2 = re.search('-+',self.versao.group())
+                    if self.versao2 is None:
+                        self.versao2= re.search('\d\d\d\d*',self.versao.group()).group()
+                        self.versao=self.versao2
+            if self.versao is None:
+                self.versao = str(date.today())
+                self.versao = self.versao.replace('-','')[-6::]
+
+
+
+
+            self.tablet = re.search('>SED169.*<', self.tudo)
+            if self.tablet is not None:
+                self.tablet = re.search('>SED169.*<', self.tudo).group()
+                self.tabletN77 = re.search('TRM', self.tablet)
+                if self.tabletN77 is not None:
+                    self.tablet = 'N776/N77'
+                self.tabletSAM = re.search('VCM_SL', self.tablet)
+                if self.tabletSAM is not None:
+                    self.tablet = 'SAMSUNG'
+                self.SEMtablet = re.search('SGN NN', self.tablet)
+                if self.SEMtablet is not None:
+                    self.tablet = None
+
+        self.cabeçalho = self.Json()
+        self.Criar()
+        comandos= self.message()
+        AES_pkcs5_obj= AES_pkcs5(self.path,comandos)
+        encrypted_message = AES_pkcs5_obj.encrypt(comandos)
+
+
+
+    def Json(self,*args):
+        if self.path is not None:
+            idarq='{"idarquivo":"'+self.idarquivo+'",'
+            Jtipo='"tipo":"'+self.tipo+'",'
+            Jhardware='"hardware":["'+self.hardware+'"],'
+            Jversao='"configs":[{"Versão":"'+self.versao+'"},'
+            idarq2='{"idarquivo":"'+self.idarquivo+'"}'
+            cabeçalho=idarq+Jtipo+Jhardware+Jversao+idarq2
+            if self.tablet is not None:
+                Jtablet=',{"Modelo Tablet":"'+self.tablet+'"}'
+                cabeçalho=cabeçalho+Jtablet
+            Jmifare=',{"Mifare":"'+self.mifare+'"}'
+            cabeçalho = cabeçalho+Jmifare
+            if self.lim_vel is not None:
+                limiteVel=',{"limite Vel":"'+self.lim_vel+'"}'
+                cabeçalho=cabeçalho+limiteVel
+            if self.vel_evento is not None:
+                velEvento=',{"limite Vel Evento":"'+self.vel_evento+'"}'
+                cabeçalho=cabeçalho+velEvento
+            if self.tempo_infra is not None:
+                tempoInfra=',{"Tempo Infração":"'+self.tempo_infra+'"}'
+                cabeçalho=cabeçalho+tempoInfra
+            comandos='],"comandos":"'
+            cabeçalho=cabeçalho+comandos
+            print(cabeçalho)
+        return cabeçalho
+
+    def Criar(self,*args):
+        f2=open (f'{self.path}.json','w',encoding='utf-8')
+        f2.write(self.cabeçalho)
+        for i in range(len(self.lista_comandos)):
+            f2.write(self.lista_comandos[i]) 
+        f2.write('"')
+        hash = ',"hash":""}'
+        f2.write(hash)
+        f2.close()
+
+    def message(self):
+        f=open(f'{self.path}.json',encoding='utf_8')
+        json_data=f.read()
+        json_dict = json.loads(json_data)
+        comandos=json_dict['comandos']
+        return comandos
+
+class AES_pkcs5():
+    def __init__(self,path,key:str, mode:AES.MODE_CBC=AES.MODE_CBC,block_size:int=16):
+        self.path = path
         self.key = self.setKey(key)
         self.mode = mode
         self.block_size = block_size
@@ -125,359 +468,17 @@ class AES_pkcs5:
         cipher = AES.new(self.key, AES.MODE_CBC,iv)
         encrypted = cipher.encrypt(padded.encode())
         encrypted64 = base64.b64encode(encrypted).decode('utf-8')
-        f=open(f'{path}.json',encoding='utf_8')
+        f=open(f'{self.path}.json',encoding='utf_8')
         json_data=f.read()
         json_dict = json.loads(json_data)
         comandos=json_dict['comandos']
         json_dict.update(comandos=encrypted64)
         json_dict.update(hash=base64.b64encode(self.key).decode('utf-8'))
-        f = open(f'{path}.json', 'w',encoding='utf-8')
+        f = open(f'{self.path}.json', 'w',encoding='utf-8')
         json.dump(json_dict, f,ensure_ascii=False)
 
 
-
-if buscaS3 is not None:
-    ##### VARIAVEIS PARA CABEÇALHO 
-    hardware = 'VIRLOC12'
-
-
-    lim_vel= re.search('>SCT11.*<',tudo)
-    if lim_vel is not None:
-        lim_vel= re.search('>SCT11.*<',tudo).group()[7:-1]
-        if str(len(lim_vel)) == '5':
-            lim_vel = lim_vel[0:2]
-        else:
-            lim_vel = lim_vel[0:3]
-
-    
-
-    vel_evento= re.search('>SCT12.*<',tudo)
-    if vel_evento is not None:
-        vel_evento= re.search('>SCT12.*<',tudo).group()[7:-1]
-        if str(len(vel_evento)) == '5':
-            vel_evento = vel_evento[0:2]
-        if str(len(vel_evento)) == '6':
-            vel_evento = vel_evento[0:3]
-
-
-
-    tempo_infra= re.search('>SCT06.*<',tudo)
-    if tempo_infra is not None:
-        tempo_infra= re.search('>SCT06.*<',tudo).group()[7:-1]
-
-
-
-    mifare= re.search('>SSH11.*<',tudo)
-    if mifare is not None:
-        mifare= re.search('>SSH11.*<',tudo).group()[6]
-        if mifare == '1':
-            mifare = 'Habilitado'
-        else:
-            mifare = 'Desabilitado'
-    else:
-        mifare = 'Desabilitado' 
-
-
-    versao= re.search('>STP01.*<',tudo)
-    if versao is not None:
-        versao1 = re.search('-+',versao.group())
-        if versao1 is None:
-            versao1= re.search('>STP01.*<',tudo).group()
-            versao1= re.search('\d\d\d\d*',versao1).group()
-            versao = versao1
-    else:
-        versao = re.search('>STP03.*<',tudo)
-        if versao is not None:
-            versao2 = re.search('-+',versao.group())
-            if versao2 is None:
-                versao2= re.search('\d\d\d\d*',versao.group()).group()
-                versao = versao2
-    
-
-
-
-    tablet = re.search('>SED169.*<', tudo)
-    if tablet is not None:
-        tablet = re.search('>SED169.*<', tudo).group()
-        tabletN77 = re.search('TRM', tablet)
-        if tabletN77 is not None:
-            tablet = 'N776/N77'
-        tabletSAM = re.search('VCM_SL', tablet)
-        if tabletSAM is not None:
-            tablet = 'SAMSUNG'
-        SEMtablet = re.search('SGN NN', tablet)
-        if SEMtablet is not None:
-            tablet = None
         
-
-    
-elif buscaS1 is not None:
-    ##### VARIAVEIS PARA CABEÇALHO 
-
-    hardware = 'VIRLOC6'
-
-    lim_vel= re.search('>VS08,100.*<',tudo)
-    if lim_vel is not None:
-        lim_vel= re.search('>VS08,100.*<',tudo).group()[10:13]
-        if lim_vel[0] == '0':
-            lim_vel = re.sub(r'0', '', lim_vel, count = 1)
-
-
-    
-
-    tempo_infra= re.findall('>SCT06.*<',tudo)
-    if ((tempo_infra is not None) and (tempo_infra !='0')):
-        tempo_infra= re.findall('>SCT06.*<',tudo)[1]
-        tempo_infra = tempo_infra[7:-1]
-
-
-
-    mifare= re.search('>SSH11.*<',tudo)
-    if mifare is not None:
-        mifare= re.search('>SSH11.*<',tudo).group()[6]
-        if mifare == '1':
-            mifare = 'Habilitado'
-        else:
-            mifare = 'Desabilitado'
-    else:
-        mifare = 'Desabilitado' 
-
-
-    versao= re.search('>SIS82.*<',tudo)
-    if versao is not None:
-        versao1 = re.search('-',versao.group())
-        if versao1 is not None:
-            versao1 = re.search('-',versao1.group())
-        else:    
-            versao1= re.search('>SIS82.*<',tudo).group()
-            versao1= re.search('\d\d\d\d*',versao1).group()
-            versao = versao1
-    else:
-        versao = re.search('>SIS84.*<',tudo)
-        if versao is not None:
-            versao2 = re.search('>SIS84.*<',tudo).group()
-            if versao2 != '-':
-                versao2= re.search('\d\d\d\d*',versao2).group()
-                versao= versao2
-     
-
-    vel_evento = None
-    tablet = None
-
-    
-        
-elif buscaS4 is not None:
-
-    hardware = 'VIRCOM5'
-
-
-    lim_vel= re.search('>SCT11.*<',tudo)
-    if lim_vel is not None:
-        lim_vel= re.search('>SCT11.*<',tudo).group()[7:-1]
-        if str(len(lim_vel)) == '5':
-            lim_vel = lim_vel[0:2]
-        else:
-            lim_vel = lim_vel[0:3]
-
-    
-
-    vel_evento= re.search('>SCT12.*<',tudo)
-    if vel_evento is not None:
-        vel_evento= re.search('>SCT12.*<',tudo).group()[7:-1]
-        if str(len(vel_evento)) == '5':
-            vel_evento = vel_evento[0:2]
-        if str(len(vel_evento)) == '6':
-            vel_evento = vel_evento[0:3]
-
-
-
-    tempo_infra= re.search('>SCT06.*<',tudo)
-    if tempo_infra is not None:
-        tempo_infra= re.search('>SCT06.*<',tudo).group()[7:-1]
-
-
-    mifare= re.search('>SSH11.*<',tudo)
-    if mifare is not None:
-        mifare= re.search('>SSH11.*<',tudo).group()[6]
-        if mifare == '1':
-            mifare = 'Habilitado'
-        else:
-            mifare = 'Desabilitado'
-    else:
-        mifare = 'Desabilitado'
-
-    versao= re.search('>STP01.*<',tudo)
-    if versao is not None:
-        versao1 = re.search('-+',versao.group())
-        if versao1 is None:
-            versao1= re.search('>STP01.*<',tudo).group()
-            versao1= re.search('\d\d\d\d*',versao1).group()
-            versao= versao1
-    else:
-        versao = re.search('>STP03.*<',tudo)
-        if versao is not None:
-            versao2 = re.search('-+',versao.group())
-            if versao2 is None:
-                versao2= re.search('\d\d\d\d*',versao.group()).group()
-                versao = versao2
-
-    tablet = None
-
-
-elif buscaS8 is not None:
-
-    ##### VARIAVEIS PARA CABEÇALHO 
-    hardware = 'VIRLOC8'
-
-    lim_vel= re.search('>SCT11.*<',tudo)
-    if lim_vel is not None:
-        lim_vel= re.search('>SCT11.*<',tudo).group()[7:-1]
-        if str(len(lim_vel)) == '5':
-            lim_vel = lim_vel[0:2]
-        else:
-            lim_vel = lim_vel[0:3]
-
-    
-
-    vel_evento= re.search('>SCT12.*<',tudo)
-    if vel_evento is not None:
-        vel_evento= re.search('>SCT12.*<',tudo).group()[7:-1]
-        if str(len(vel_evento)) == '5':
-            vel_evento = vel_evento[0:2]
-        if str(len(vel_evento)) == '6':
-            vel_evento = vel_evento[0:3]
-
-
-
-    tempo_infra= re.search('>SCT06.*<',tudo)
-    if tempo_infra is not None:
-        tempo_infra= re.search('>SCT06.*<',tudo).group()[7:-1]
-
-
-
-    mifare= re.search('>SSH11.*<',tudo)
-    if mifare is not None:
-        mifare= re.search('>SSH11.*<',tudo).group()[6]
-        if mifare == '1':
-            mifare = 'Habilitado'
-        else:
-            mifare = 'Desabilitado'
-    else:
-        mifare = 'Desabilitado' 
-
-    
-    versao= re.search('>STP01.*<',tudo)
-    if versao is not None:
-        versao1 = re.search('-+',versao.group())
-        if versao1 is None:
-            versao1= re.search('>STP01.*<',tudo).group()
-            versao1= re.search('\d\d\d\d*',versao1).group()
-            versao = versao1
-    if versao is None:
-        versao = re.search('>STP03.*<',tudo)
-        if versao is not None:
-            versao2 = re.search('-+',versao.group())
-            if versao2 is None:
-                versao2= re.search('\d\d\d\d*',versao.group()).group()
-                versao = versao2
-    # versao =None
-    # if versao is None:
-    #     versao = str(date.today())
-    #     versao = versao.replace('-','')[-6::]
-    
-
-
-    tablet = re.search('>SED169.*<', tudo)
-    if tablet is not None:
-        tablet = re.search('>SED169.*<', tudo).group()
-        tabletN77 = re.search('TRM', tablet)
-        if tabletN77 is not None:
-            tablet = 'N776/N77'
-        tabletSAM = re.search('VCM_SL', tablet)
-        if tabletSAM is not None:
-            tablet = 'SAMSUNG'
-        SEMtablet = re.search('SGN NN', tablet)
-        if SEMtablet is not None:
-            tablet = None
-    
-    
-
-else:
-
-    ##### VARIAVEIS PARA CABEÇALHO 
-    hardware = 'VIRLOC10"'+','+'"VIRLOC11'
-
-    lim_vel= re.search('>SCT11.*<',tudo)
-    if lim_vel is not None:
-        lim_vel= re.search('>SCT11.*<',tudo).group()[7:-1]
-        if str(len(lim_vel)) == '5':
-            lim_vel = lim_vel[0:2]
-        else:
-            lim_vel = lim_vel[0:3]
-
-    
-
-    vel_evento= re.search('>SCT12.*<',tudo)
-    if vel_evento is not None:
-        vel_evento= re.search('>SCT12.*<',tudo).group()[7:-1]
-        if str(len(vel_evento)) == '5':
-            vel_evento = vel_evento[0:2]
-        if str(len(vel_evento)) == '6':
-            vel_evento = vel_evento[0:3]
-
-
-
-    tempo_infra= re.search('>SCT06.*<',tudo)
-    if tempo_infra is not None:
-        tempo_infra= re.search('>SCT06.*<',tudo).group()[7:-1]
-
-
-    mifare= re.search('>SSH11.*<',tudo)
-    if mifare is not None:
-        mifare= re.search('>SSH11.*<',tudo).group()[6]
-        if mifare == '1':
-            mifare = 'Habilitado'
-        else:
-            mifare = 'Desabilitado'
-    else:
-        mifare = 'Desabilitado'      
-
-
-
-    versao= re.search('>STP01.*<',tudo)
-    if versao is not None:
-        versao1 = re.search('-+',versao.group())
-        if versao1 is None:
-            versao1= re.search('>STP01.*<',tudo).group()
-            versao1= re.search('\d\d\d\d*',versao1).group()
-            versao = versao1
-    else:
-        versao = re.search('>STP03.*<',tudo)
-        if versao is not None:
-            versao2 = re.search('-+',versao.group())
-            if versao2 is None:
-                versao2= re.search('\d\d\d\d*',versao.group()).group()
-                versao=versao2
-    if versao is None:
-        versao = str(date.today())
-        versao = versao.replace('-','')[-6::]
-
-
-
-
-    tablet = re.search('>SED169.*<', tudo)
-    if tablet is not None:
-        tablet = re.search('>SED169.*<', tudo).group()
-        tabletN77 = re.search('TRM', tablet)
-        if tabletN77 is not None:
-            tablet = 'N776/N77'
-        tabletSAM = re.search('VCM_SL', tablet)
-        if tabletSAM is not None:
-            tablet = 'SAMSUNG'
-        SEMtablet = re.search('SGN NN', tablet)
-        if SEMtablet is not None:
-            tablet = None
-    
 # if __name__ == '__main__':
     # cabeçalho = Json()
     # Criar()

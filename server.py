@@ -3,7 +3,7 @@ from flask import request
 from flask import json
 from pprint import pprint
 import re
-# import JENKINS_PERFIL_PURO 
+import JENKINS_PERFIL_PURO 
 
 
 import os
@@ -19,7 +19,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def api_root():
-    return 'welcome'
+    return 'API GIT'
 
 # @app.route('/github', methods=['POST'])
 # def api_message():
@@ -37,10 +37,13 @@ def api_message():
         pprint(my_info)
         file_name = my_info['head_commit']['modified'][0]  # pega o primeiro arquivo modificado
         print(file_name)        
-        caminho = 'C:\\Users\\guilh\\OneDrive\\Documentos\\Python Scripts'
+        caminho = 'C:\\Python scripts'
         caminho_completo = procurar_arquivo(file_name, caminho)
         if caminho_completo is not None:
             print(f'O arquivo foi encontrado em: {caminho_completo}')
+            JENKINS_PERFIL_PURO.GeraPerfil().main(caminho_completo)
+
+
         else:
             print(f'O arquivo {file_name} não foi encontrado em {caminho}.')
         return file_name
