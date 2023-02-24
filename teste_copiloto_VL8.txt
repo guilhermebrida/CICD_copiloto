@@ -12,7 +12,7 @@
 >VSKO000000000000<
 
 //Limpa os contadores Numericos
->SCT0095 2<
+>SCT0095 22<
 
 //Limpa as Flags
 >SCT96 0<
