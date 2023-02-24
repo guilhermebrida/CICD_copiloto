@@ -85,7 +85,7 @@ def arquivo_encontrado():
 def encontrar_arquivo():
     my_info = request.json
     file_name = my_info['head_commit']['modified'][0]  # pega o primeiro arquivo modificado
-    caminho = 'C:\\Python scripts'
+    caminho = 'C:\\'
     caminho_completo = procurar_arquivo(file_name, caminho)
     if caminho_completo is not None:
         print(f'O arquivo foi encontrado em: {caminho_completo}')
